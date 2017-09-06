@@ -34,5 +34,5 @@ urlpatterns = [
     url(r'^auth_token', views.obtain_auth_token, name="get_auth"),
     url(r'^api/v0/', include(router.urls, namespace='api/v0')),
     # url(r'^login', TemplateView.as_view(template_name="core/corelogin.html")),
-    url(r'^', TemplateView.as_view(template_name="core/root.html"))
+    # url(r'^', TemplateView.as_view(template_name="core/root.html"))
 ]

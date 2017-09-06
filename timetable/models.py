@@ -7,10 +7,6 @@ from classtime.models import ClassTime
 from marks.models import GradeSubject
 
 
-
-
-
-
 class ScheduledSubject(models.Model):
     class_time = models.ForeignKey(ClassTime,verbose_name="class time",on_delete=models.CASCADE)
     date = models.DateField(verbose_name="subject date",default=datetime(2017,9,10))

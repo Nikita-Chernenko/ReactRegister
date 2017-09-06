@@ -4,7 +4,6 @@ from django.db import models
 
 from DjangoReact import settings
 
-
 class Subject(models.Model):
     short_name = models.CharField(max_length=6, default="")
     full_name = models.CharField(max_length=20, default="")

@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 // import ReactDOM from 'react-dom'
 import {login, loggedIn, logout} from '../scripts/auth'
+import { Redirect } from 'react-router'
 export default class Login extends Component {
     constructor(props){
         super(props);
@@ -8,12 +9,12 @@ export default class Login extends Component {
     }
   handleSubmit(e) {
     e.preventDefault();
-    var username = this.refs.username.value
-        var pass = this.refs.password.value
+    let username = this.refs.username.value;
+    let pass = this.refs.password.value;
 
-        login(username, pass, (loggedIn) => {
+    login(username, pass, (loggedIn) => {
 
-        })
+    })
     // let formData = new FormData();
     // let csrftoken = Cookies.get('csrftoken');
     // let headers = new Headers();
@@ -30,17 +31,13 @@ export default class Login extends Component {
     //     catch(alert)
 
   }
-  static loginCheck(nextState, replace){
-      if (!loggedIn()) {
-        replace('/login')
-
-      }
+  static loginCheck(history){
+      // if (!loggedIn()) {
+      //   history.push('/login')
+      // }
   }
-  static logoutHandler(el) {
+  static logoutHandler() {
         logout();
-        console.log(el);
-        console.log(el.context);
-        el.context.router.browser.replace('/login')
 
 
     }
