@@ -7,8 +7,10 @@ from rest_framework import viewsets, status
 from django_filters import rest_framework as filters
 from rest_framework.decorators import list_route
 
+from marks.permissions import IsTeacherOrReadOnly
 from marks.serializers import MarkSerializer, GradeSubjectSerializer, SubjectSerializer, StudentSerializer
 from marks.models import Mark, GradeSubject, Student, Grade
+from notifications.models import RegisterNotification
 from timetable.filters import ScheduledSubjectFilter
 from annoying.functions import get_object_or_None
 
@@ -20,19 +22,46 @@ class MarkViewSet(viewsets.ModelViewSet):
     queryset = Mark.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = ScheduledSubjectFilter
+    permission_classes = IsTeacherOrReadOnly
 
     def get_queryset(self):
         user = self.request.user
-        if not user.is_anonymous:
-            queryset = Mark.objects.all()
-            if user.staff == "S":
-                queryset = queryset.filter(student=Student.objects.get(student_user=user)).order_by('date',
-                                                                                                    'class_time__lesson_start')
-            elif user.staff == "T":
-                grade_subject_id = self.request.query_params.get("grade_subject_id", None)
-                queryset = queryset.filter(grade_subject_id=grade_subject_id)
-        else:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+        queryset = Mark.objects.all()
+        try:
+            staff = user.staff
+        except:
+            staff = None
+        if staff == "S":
+            queryset = queryset.filter(student=Student.objects.get(student_user=user)).order_by('date',
+                                                                                                'class_time__lesson_start')
+        elif staff == "T":
+            grade_subject_id = self.request.query_params.get("grade_subject_id", None)
+            queryset = queryset.filter(grade_subject_id=grade_subject_id)
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        user = self.request.user
+        value = request.data['value']
+        student = request.data['student']
+        class_time = request.data['class_time']
+        date = request.data['date']
+        grade_subject = request.data['grade_subject']
+        RegisterNotification(sender=user, reciever=student, value=value, class_time=class_time,
+                             date=date, grade_subject=grade_subject).save()
+        return super(self).create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        value = request.data['value']
+        user = self.request.user
+        student = request.data['student']
+        class_time = request.data['class_time']
+        date = request.data['date']
+        grade_subject = request.data['grade_subject']
+        notification = RegisterNotification.objects.get(sender=user, reciever=student,
+                                                        class_time=class_time, date=date, grade_subject=grade_subject)
+        notification.value = value
+        notification.save()
+        return super(self).update(request, *args, **kwargs)
 
     @list_route(methods=['get'])
     def grade_subjects(self, request):
@@ -162,9 +191,9 @@ class MarkViewSet(viewsets.ModelViewSet):
                 filter(grade_subject_id=grade_subject_id).filter(date__gt=date_from).
                 filter(date__lt=date_to).values_list('date', flat=True).distinct()]
             students = Student.objects.filter(grade=grade)
-            marks = MarkSerializer(all_marks,many=True).data
-            students = StudentSerializer(students,many=True).data
-            return Response({'marks':marks,'students':students,'dates':dates})
+            marks = MarkSerializer(all_marks, many=True).data
+            students = StudentSerializer(students, many=True).data
+            return Response({'marks': marks, 'students': students, 'dates': dates})
 
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)

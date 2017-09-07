@@ -10,3 +10,5 @@ class AbsenceViewSet(viewsets.ModelViewSet):
     queryset = Absence.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = ScheduledSubjectFilter
+
+
