@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from marks.models import Mark, GradeSubject, Subject
+from marks.models import Mark, GradeSubject, Subject, Student
 
 
 class MarkSerializer(serializers.ModelSerializer):
@@ -21,3 +21,7 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = "__all__"
 
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = "__all__"

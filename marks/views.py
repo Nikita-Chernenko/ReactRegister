@@ -7,10 +7,12 @@ from rest_framework import viewsets, status
 from django_filters import rest_framework as filters
 from rest_framework.decorators import list_route
 
-from marks.serializers import MarkSerializer, GradeSubjectSerializer, SubjectSerializer
-from marks.models import Mark, GradeSubject, Student
+from marks.serializers import MarkSerializer, GradeSubjectSerializer, SubjectSerializer, StudentSerializer
+from marks.models import Mark, GradeSubject, Student, Grade
 from timetable.filters import ScheduledSubjectFilter
 from annoying.functions import get_object_or_None
+
+from timetable.models import ScheduledSubject
 
 
 class MarkViewSet(viewsets.ModelViewSet):
@@ -31,13 +33,6 @@ class MarkViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(grade_subject_id=grade_subject_id)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
-
-    def get_query_dates(self):
-        date_from = datetime.datetime.strptime(self.request.query_params.get("data_from", "8.09.2017").strip(),
-                                               "%d.%m.%Y").date()
-        date_to = datetime.datetime.strptime(self.request.query_params.get("data_to", "12.09.2017").strip(),
-                                             "%d.%m.%Y").date()
-        return date_from, date_to
 
     @list_route(methods=['get'])
     def grade_subjects(self, request):
@@ -122,8 +117,10 @@ class MarkViewSet(viewsets.ModelViewSet):
     #     else:
     #         content = {'bad_user': 'user is not a student'}
     #         return Response(content, status=status.HTTP_403_FORBIDDEN)
+
+    # student token = "Authorization: Token 473cd764e73faf62f185b65e05a655eb9323259f"
     @list_route(methods=['get'])
-    def student_table_data(self,request):
+    def student_table_data(self, request):
         user = self.request.user
         if self.student_check(user=user):
             try:
@@ -133,25 +130,52 @@ class MarkViewSet(viewsets.ModelViewSet):
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
             marks = Mark.objects.filter(student=Student.objects.get(student_user=user)). \
                 order_by('date', 'class_time__lesson_start')
-            grade_subjects = GradeSubject.objects.order_by('subject__full_name').filter(grade__student__student_user=user)
+            grade_subjects = GradeSubject.objects.order_by('subject__full_name').filter(
+                grade__student__student_user=user)
             dates = []
             date = date_from
             date_delta = datetime.timedelta(days=1)
             while date < date_to + date_delta:
                 dates.append(date.strftime("%d-%m"))
                 date += date_delta
-            marks = MarkSerializer(marks,many=True).data
-            grade_subjects= GradeSubjectSerializer(grade_subjects,many=True).data
-            content = {'marks':marks, 'grade_subjects':grade_subjects,'dates': dates}
-            return Response(content,status=status.HTTP_200_OK)
+            marks = MarkSerializer(marks, many=True).data
+            grade_subjects = GradeSubjectSerializer(grade_subjects, many=True).data
+            content = {'marks': marks, 'grade_subjects': grade_subjects, 'dates': dates}
+            return Response(content, status=status.HTTP_200_OK)
 
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
+    # teacher token = "Authorization: Token 157883759c78b8ec5414fac80e00f812abde8d14"
     @list_route(methods=['get'])
-    def teacher_table_data(self,request):
-        #TODO make this
-        pass
+    def teacher_table_data(self, request):
+        user = self.request.user
+        if self.teacher_check(user):
+            grade_subject_id = self.request.query_params.get('grade_subject_id', 0)
+            date_from, date_to = self.get_query_dates()
+            if grade_subject_id is None:
+                return Response({'no correct grade_subject_id'}, status=status.HTTP_400_BAD_REQUEST)
+            all_marks = Mark.objects.order_by('date').filter(grade_subject_id=grade_subject_id). \
+                filter(date__gte=date_from).filter(date__lte=date_to)
+            grade = get_object_or_None(Grade, gradesubject__id=grade_subject_id)
+            dates = [sub for sub in ScheduledSubject.objects.
+                filter(grade_subject_id=grade_subject_id).filter(date__gt=date_from).
+                filter(date__lt=date_to).values_list('date', flat=True).distinct()]
+            students = Student.objects.filter(grade=grade)
+            marks = MarkSerializer(all_marks,many=True).data
+            students = StudentSerializer(students,many=True).data
+            return Response({'marks':marks,'students':students,'dates':dates})
+
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def get_query_dates(self):
+        date_from = datetime.datetime.strptime(self.request.query_params.get("data_from", "8.09.2017").strip(),
+                                               "%d.%m.%Y").date()
+        date_to = datetime.datetime.strptime(self.request.query_params.get("data_to", "12.09.2017").strip(),
+                                             "%d.%m.%Y").date()
+        return date_from, date_to
+
     def student_check(self, user):
         return not user.is_anonymous and user.staff == 'S'
 
