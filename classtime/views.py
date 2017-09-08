@@ -11,6 +11,5 @@ from classtime.serializers import ClassTimeSerializer
 class ClassTimeViewSet(viewsets.ModelViewSet):
     serializer_class = ClassTimeSerializer
     queryset = ClassTime.objects.all()
-    filter_backends = (rest_framework.DjangoFilterBackend,)
     filter_class = ClassTimeFilter
 

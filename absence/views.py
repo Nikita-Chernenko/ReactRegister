@@ -8,7 +8,6 @@ from timetable.filters import ScheduledSubjectFilter
 class AbsenceViewSet(viewsets.ModelViewSet):
     serializer_class = AbsenceSerializer
     queryset = Absence.objects.all()
-    filter_backends = (filters.DjangoFilterBackend,)
     filter_class = ScheduledSubjectFilter
 
 

@@ -7,22 +7,21 @@ from rest_framework import viewsets, status
 from django_filters import rest_framework as filters
 from rest_framework.decorators import list_route
 
+from classtime.models import ClassTime
 from marks.permissions import IsTeacherOrReadOnly
 from marks.serializers import MarkSerializer, GradeSubjectSerializer, SubjectSerializer, StudentSerializer
-from marks.models import Mark, GradeSubject, Student, Grade
-from notifications.models import RegisterNotification
+from marks.models import Mark, GradeSubject, Student, Grade, Teacher
+from register_notifications.models import RegisterNotification
 from timetable.filters import ScheduledSubjectFilter
 from annoying.functions import get_object_or_None
-
 from timetable.models import ScheduledSubject
 
 
 class MarkViewSet(viewsets.ModelViewSet):
     serializer_class = MarkSerializer
     queryset = Mark.objects.all()
-    filter_backends = (filters.DjangoFilterBackend,)
     filter_class = ScheduledSubjectFilter
-    permission_classes = IsTeacherOrReadOnly
+    permission_classes = (IsTeacherOrReadOnly,)
 
     def get_queryset(self):
         user = self.request.user
@@ -43,11 +42,12 @@ class MarkViewSet(viewsets.ModelViewSet):
         user = self.request.user
         value = request.data['value']
         student = request.data['student']
-        class_time = request.data['class_time']
+        class_time_id = request.data['class_time']
         date = request.data['date']
-        grade_subject = request.data['grade_subject']
-        RegisterNotification(sender=user, reciever=student, value=value, class_time=class_time,
-                             date=date, grade_subject=grade_subject).save()
+        grade_subject_id = request.data['grade_subject']
+        RegisterNotification(sender=Teacher.objects.get(teacher_user=user), reciever=student, value=value,
+                             class_time=ClassTime.objects.get(pk=class_time_id),
+                             date=date, grade_subject=GradeSubject.objects.get(pk=grade_subject_id)).save()
         return super(self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):

@@ -19,15 +19,21 @@ from django.views.generic import TemplateView
 
 from absence.views import AbsenceViewSet
 from classtime.views import ClassTimeViewSet
+from hometask.views import HometaskViewSet
 from marks import views
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken import views
 from marks.views import MarkViewSet
+from register_notifications.views import RegisterNotificationViewSet
+from timetable.views import TimetableViewSet
 
 router = DefaultRouter()
 router.register(r'marks', MarkViewSet, base_name='mark')
 router.register(r'absences', AbsenceViewSet, base_name='absence')
 router.register(r'classtimes', ClassTimeViewSet, base_name='classtime')
+router.register(r'hometasks',HometaskViewSet,base_name='hometask')
+router.register(r'register_notifications',RegisterNotificationViewSet,base_name='register_notification')
+router.register(r'timetable',TimetableViewSet,base_name='timetable')
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

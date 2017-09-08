@@ -7,7 +7,6 @@ class MarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mark
         fields = "__all__"
-        depth = 1
 
 
 class GradeSubjectSerializer(serializers.ModelSerializer):
