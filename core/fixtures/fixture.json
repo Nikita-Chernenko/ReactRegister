@@ -1,0 +1,238 @@
+[
+  {
+    "model": "sessions.session",
+    "pk": "jstrey8f5lifyr3tsgrnio6tce0tcv6k",
+    "fields": {
+      "session_data": "MzM1NmRmNDE0ZTQxMTljNGQ2MTFlMzAxNzZjOTIzMThjNTJmYWNmYTp7Il9hdXRoX3VzZXJfaWQiOiIxIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiI0ODhkNGQzYmJhZTJmNjgyNTAxOTFmM2I4ZGEyNzAxNTFiMDE5NGU4In0=",
+      "expire_date": "2017-09-12T23:44:31.667Z"
+    }
+  },
+  {
+    "model": "sessions.session",
+    "pk": "l1glioqg12rrbps2l2oyvqmpfedp0dr7",
+    "fields": {
+      "session_data": "MzM1NmRmNDE0ZTQxMTljNGQ2MTFlMzAxNzZjOTIzMThjNTJmYWNmYTp7Il9hdXRoX3VzZXJfaWQiOiIxIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiI0ODhkNGQzYmJhZTJmNjgyNTAxOTFmM2I4ZGEyNzAxNTFiMDE5NGU4In0=",
+      "expire_date": "2017-09-22T18:45:43.064Z"
+    }
+  },
+  {
+    "model": "core.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$36000$IJIxAhGGLZBu$9W21g+ZgE3EpqDDsis2sftYmUimdtP2nYfaBAhz3SEg=",
+      "last_login": "2017-09-08T18:45:42.963Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "",
+      "last_name": "",
+      "email": "",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2017-08-29T07:53:29Z",
+      "staff": "A",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "core.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$36000$cQn20NGYcuoX$nh89LH6HN28bzdC0kI/n+Cj56juwkcjVAfvPi4mYL9k=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "teacher1",
+      "first_name": "",
+      "last_name": "",
+      "email": "",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2017-08-29T08:23:42Z",
+      "staff": "T",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "core.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$36000$iEq8TOeECw9Q$UxuriRoK1uP74x2tsD6CxS2q5wF4yH7LB1IYAeEZjqw=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "student1",
+      "first_name": "",
+      "last_name": "",
+      "email": "",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2017-08-29T08:23:58Z",
+      "staff": "S",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "marks.subject",
+    "pk": 1,
+    "fields": {
+      "short_name": "s",
+      "full_name": "s"
+    }
+  },
+  {
+    "model": "marks.teacher",
+    "pk": 1,
+    "fields": {
+      "teacher_user": [
+        "teacher1"
+      ],
+      "name": "Olena",
+      "surname": "Volodumirivna",
+      "self_classroom": "10"
+    }
+  },
+  {
+    "model": "marks.teacher",
+    "pk": 2,
+    "fields": {
+      "teacher_user": [
+        "teacher1"
+      ],
+      "name": "Olena",
+      "surname": "Volodumirivna",
+      "self_classroom": "10"
+    }
+  },
+  {
+    "model": "marks.grade",
+    "pk": 1,
+    "fields": {
+      "grade_number": "10-\u0431",
+      "head_teacher": 1
+    }
+  },
+  {
+    "model": "marks.gradesubject",
+    "pk": 1,
+    "fields": {
+      "grade": 1,
+      "subject": 1,
+      "teacher": 2,
+      "classroom": "105a"
+    }
+  },
+  {
+    "model": "marks.student",
+    "pk": 1,
+    "fields": {
+      "student_user": [
+        "student1"
+      ],
+      "name": "Nikita",
+      "surname": "Chernenko",
+      "grade": 1
+    }
+  },
+  {
+    "model": "marks.mark",
+    "pk": 1,
+    "fields": {
+      "value": 12,
+      "student": 1
+    }
+  },
+  {
+    "model": "timetable.scheduledsubject",
+    "pk": 1,
+    "fields": {
+      "class_time": 1,
+      "date": "2017-09-10",
+      "grade_subject": 1
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 1,
+    "fields": {
+      "lesson_start": "08:30:00",
+      "lesson_end": "09:15:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 2,
+    "fields": {
+      "lesson_start": "09:25:00",
+      "lesson_end": "10:10:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 3,
+    "fields": {
+      "lesson_start": "10:20:00",
+      "lesson_end": "11:05:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 4,
+    "fields": {
+      "lesson_start": "11:15:00",
+      "lesson_end": "12:00:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 5,
+    "fields": {
+      "lesson_start": "12:20:00",
+      "lesson_end": "13:05:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 6,
+    "fields": {
+      "lesson_start": "13:15:00",
+      "lesson_end": "14:00:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 7,
+    "fields": {
+      "lesson_start": "14:10:00",
+      "lesson_end": "14:55:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 8,
+    "fields": {
+      "lesson_start": "15:05:00",
+      "lesson_end": "15:50:00"
+    }
+  },
+  {
+    "model": "authtoken.token",
+    "pk": "157883759c78b8ec5414fac80e00f812abde8d14",
+    "fields": {
+      "user": [
+        "teacher1"
+      ],
+      "created": "2017-08-29T19:21:17.252Z"
+    }
+  },
+  {
+    "model": "authtoken.token",
+    "pk": "473cd764e73faf62f185b65e05a655eb9323259f",
+    "fields": {
+      "user": [
+        "student1"
+      ],
+      "created": "2017-08-29T08:41:22.922Z"
+    }
+  }
+]

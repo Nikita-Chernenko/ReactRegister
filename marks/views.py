@@ -1,19 +1,17 @@
 import datetime
 
-from django.core import serializers
+from annoying.functions import get_object_or_None
 from django.http import JsonResponse
-from rest_framework.response import Response
 from rest_framework import viewsets, status
-from django_filters import rest_framework as filters
 from rest_framework.decorators import list_route
+from rest_framework.response import Response
 
 from classtime.models import ClassTime
-from marks.permissions import IsTeacherOrReadOnly
-from marks.serializers import MarkSerializer, GradeSubjectSerializer, SubjectSerializer, StudentSerializer
+from core.permissions import IsTeacherOrReadOnly
 from marks.models import Mark, GradeSubject, Student, Grade, Teacher
+from marks.serializers import MarkSerializer, GradeSubjectSerializer, StudentSerializer
 from register_notifications.models import RegisterNotification
 from timetable.filters import ScheduledSubjectFilter
-from annoying.functions import get_object_or_None
 from timetable.models import ScheduledSubject
 
 
@@ -21,7 +19,6 @@ class MarkViewSet(viewsets.ModelViewSet):
     serializer_class = MarkSerializer
     queryset = Mark.objects.all()
     filter_class = ScheduledSubjectFilter
-    permission_classes = (IsTeacherOrReadOnly,)
 
     def get_queryset(self):
         user = self.request.user

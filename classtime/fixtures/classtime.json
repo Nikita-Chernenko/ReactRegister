@@ -1,0 +1,66 @@
+[
+  {
+    "model": "classtime.classtime",
+    "pk": 1,
+    "fields": {
+      "lesson_start": "08:30:00",
+      "lesson_end": "09:15:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 2,
+    "fields": {
+      "lesson_start": "09:25:00",
+      "lesson_end": "10:10:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 3,
+    "fields": {
+      "lesson_start": "10:20:00",
+      "lesson_end": "11:05:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 4,
+    "fields": {
+      "lesson_start": "11:15:00",
+      "lesson_end": "12:00:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 5,
+    "fields": {
+      "lesson_start": "12:20:00",
+      "lesson_end": "13:05:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 6,
+    "fields": {
+      "lesson_start": "13:15:00",
+      "lesson_end": "14:00:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 7,
+    "fields": {
+      "lesson_start": "14:10:00",
+      "lesson_end": "14:55:00"
+    }
+  },
+  {
+    "model": "classtime.classtime",
+    "pk": 8,
+    "fields": {
+      "lesson_start": "15:05:00",
+      "lesson_end": "15:50:00"
+    }
+  }
+]

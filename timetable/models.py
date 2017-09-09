@@ -9,7 +9,7 @@ from marks.models import GradeSubject
 
 class ScheduledSubject(models.Model):
     class_time = models.ForeignKey(ClassTime,verbose_name="class time",on_delete=models.CASCADE)
-    date = models.DateField(verbose_name="subject date",default=datetime(2017,9,10))
+    date = models.DateField(verbose_name="subject date",default=now)
     grade_subject = models.ForeignKey(GradeSubject)
     # def __str__(self):
     #     return "Класс " + str(self.grade_subject.grade.grade_number)+ " Предмет: " + str(self.grade_subject.subject) +\
