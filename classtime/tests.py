@@ -34,24 +34,31 @@ class ClassTimeTest(TestCase):
 
     def student_list_api(self, factory, student):
         class_time_list = ClassTimeViewSet.as_view({'get': 'list'})
-        self._student_list_api_request(factory, student, class_time_list, '/classtimes', 8)
-        self._student_list_api_request(factory, student, class_time_list,
-                                       '/classtimes/?lesson_start__qte=8:30:00&'
+        self._student_teacher_list_api_request(factory, student, class_time_list, 'api/v0/classtimes', 8)
+        self._student_teacher_list_api_request(factory, student, class_time_list,
+                                       'api/v0/classtimes/?lesson_start__qte=8:30:00&'
                                        'lesson_end__lte=15:50:00', 8)
-        self._student_list_api_request(factory, student, class_time_list,
-                                       '/classtimes/?lesson_start__qte=10:15:00&'
+        self._student_teacher_list_api_request(factory, student, class_time_list,
+                                       'api/v0/classtimes/?lesson_start__qte=10:15:00&'
                                        'lesson_end__lte=15:00:00', 5)
-        self._student_list_api_request(factory, student, class_time_list,
-                                       '/classtimes/?lesson_start__qte=9:16:00&'
+        self._student_teacher_list_api_request(factory, student, class_time_list,
+                                       'api/v0/classtimes/?lesson_start__qte=9:16:00&'
                                        'lesson_end__lte=10:00:00', 0)
 
-    def _student_list_api_request(self, factory, student, class_time_list,
-                                  url, resp_len):
+        class_time_create = ClassTimeViewSet.as_view({'post':'create'})
+        student_request = factory.post('api/v0/classtimes',{'lesson_start':'20:00:00','lesson_end':'20:45:00'},format='json')
+        force_authenticate(student_request,student,student.auth_token)
+        response = class_time_create(student_request)
+        response.render()
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def _student_teacher_list_api_request(self, factory, user, class_time_list,
+                                          url, resp_len):
         student_request = factory.get(url)
         response_unauthenticated = class_time_list(student_request)
         self.assertEqual(response_unauthenticated.status_code,
                          status.HTTP_401_UNAUTHORIZED)
-        force_authenticate(student_request, student, token=student.auth_token)
+        force_authenticate(student_request, user, token=user.auth_token)
         response = class_time_list(student_request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), resp_len)
@@ -62,10 +69,7 @@ class ClassTimeTest(TestCase):
         response_unauthenticated = class_time_detail(student_request, pk=1)
         self.assertEqual(response_unauthenticated.status_code, status.HTTP_401_UNAUTHORIZED)
         force_authenticate(student_request, student, student.auth_token)
-        print('----')
-        print('Only in this case permissions is reached')
         response = class_time_detail(student_request, pk=1)
-        print('---')
         response.render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(response.content), {
@@ -73,14 +77,14 @@ class ClassTimeTest(TestCase):
             "lesson_start": "08:30:00",
             "lesson_end": "09:15:00"
         })
-        class_time_detail = ClassTimeViewSet.as_view({'post':'create'})
 
-        student_request = factory.post('api/v0/classtimes',{'lesson_start':'20:00:00','lesson_end':'20:45:00'},format='json')
+        class_time_destroy = ClassTimeViewSet.as_view({'post':'destroy'})
+        student_request = factory.delete('api/v0/classtimes')
         force_authenticate(student_request,student,student.auth_token)
-        response = class_time_detail(student_request)
-        response.render()
-        print(ClassTime.objects.all().last())
+        response = class_time_destroy(student_request,pk=1)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
     def test_teacher_API(self):
         factory = APIRequestFactory()
 
@@ -88,15 +92,48 @@ class ClassTimeTest(TestCase):
         teacher = User.objects.get(username='teacher1')
         Token.objects.create(user=teacher)
 
+        self.teacher_list_api(factory,teacher)
+        self.teacher_detail_api(factory,teacher)
+
+    def teacher_list_api(self, factory, teacher):
         class_time_list = ClassTimeViewSet.as_view({'get': 'list'})
-        class_time_detail = ClassTimeViewSet.as_view({'get': 'list'})
+        self._student_teacher_list_api_request(factory, teacher, class_time_list, 'api/v0/classtimes', 8)
+        self._student_teacher_list_api_request(factory, teacher, class_time_list,
+                                               'api/v0/classtimes/?lesson_start__qte=8:30:00&'
+                                               'lesson_end__lte=15:50:00', 8)
+        self._student_teacher_list_api_request(factory, teacher, class_time_list,
+                                               'api/v0/classtimes/?lesson_start__qte=10:15:00&'
+                                               'lesson_end__lte=15:00:00', 5)
+        self._student_teacher_list_api_request(factory, teacher, class_time_list,
+                                               'api/v0/classtimes/?lesson_start__qte=9:16:00&'
+                                               'lesson_end__lte=10:00:00', 0)
 
-        teacher_request = factory.get('/classtimes')
-        response_unauthenticated = class_time_list(teacher_request)
+        class_time_create = ClassTimeViewSet.as_view({'post': 'create'})
+        teacher_request = factory.post('api/v0/classtimes', {'lesson_start': '20:00:00', 'lesson_end': '20:45:00'},
+                                       format='json')
+        force_authenticate(teacher_request, teacher, teacher.auth_token)
+        response = class_time_create(teacher_request)
+        response.render()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def teacher_detail_api(self,factory,teacher):
+        class_time_detail = ClassTimeViewSet.as_view({'get': 'retrieve'})
+        teacher_request = factory.get('api/v0/classtimes')
+        response_unauthenticated = class_time_detail(teacher_request, pk=1)
         self.assertEqual(response_unauthenticated.status_code, status.HTTP_401_UNAUTHORIZED)
-
-        force_authenticate(teacher_request, teacher, token=teacher.auth_token)
-        response = class_time_list(teacher_request)
-
+        force_authenticate(teacher_request, teacher, teacher.auth_token)
+        response = class_time_detail(teacher_request, pk=1)
+        response.render()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 8)
+        self.assertEqual(json.loads(response.content), {
+            "id": 1,
+            "lesson_start": "08:30:00",
+            "lesson_end": "09:15:00"
+        })
+
+        class_time_destroy = ClassTimeViewSet.as_view({'delete': 'destroy'})
+        teacher_request = factory.delete('api/v0/classtimes')
+        force_authenticate(teacher_request, teacher, teacher.auth_token)
+        response = class_time_destroy(teacher_request, pk=1)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
