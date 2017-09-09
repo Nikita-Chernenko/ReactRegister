@@ -63,6 +63,7 @@ class ClassTimeTest(TestCase):
         self.assertEqual(response_unauthenticated.status_code, status.HTTP_401_UNAUTHORIZED)
         force_authenticate(student_request, student, student.auth_token)
         print('----')
+        print('Only in this case permissions is reached')
         response = class_time_detail(student_request, pk=1)
         print('---')
         response.render()
