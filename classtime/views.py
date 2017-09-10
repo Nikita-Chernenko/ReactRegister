@@ -13,6 +13,5 @@ from core.permissions import IsTeacherOrReadOnly
 class ClassTimeViewSet(viewsets.ModelViewSet):
     serializer_class = ClassTimeSerializer
     queryset = ClassTime.objects.all()
-    # permission_classes = (IsTeacherOrReadOnly,IsAuthenticated)
     filter_class = ClassTimeFilter
 

@@ -7,7 +7,9 @@ from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
 from classtime.models import ClassTime
-from core.permissions import IsTeacherOrReadOnly
+from core.checks import teacher_check, student_check
+from core.queries_functions import get_query_dates
+
 from marks.models import Mark, GradeSubject, Student, Grade, Teacher
 from marks.serializers import MarkSerializer, GradeSubjectSerializer, StudentSerializer
 from register_notifications.models import RegisterNotification
@@ -23,10 +25,7 @@ class MarkViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = Mark.objects.all()
-        try:
-            staff = user.staff
-        except:
-            staff = None
+        staff = user.staff
         if staff == "S":
             queryset = queryset.filter(student=Student.objects.get(student_user=user)).order_by('date',
                                                                                                 'class_time__lesson_start')
@@ -64,7 +63,7 @@ class MarkViewSet(viewsets.ModelViewSet):
     def grade_subjects(self, request):
         user = request.user
         queryset = GradeSubject.objects.all().first()
-        if self.student_check(user=user):
+        if student_check(user=user):
             queryset = GradeSubject.objects.order_by('subject__full_name').filter(grade__student__student_user=user)
         serializers = GradeSubjectSerializer(queryset, many=True)
         return Response(serializers.data)
@@ -74,8 +73,8 @@ class MarkViewSet(viewsets.ModelViewSet):
         user = request.user
         queryset = Mark.objects.all().first()
         dates = queryset.date
-        if self.student_check(user=user):
-            date_from, date_to = self.get_query_dates()
+        if student_check(user=user):
+            date_from, date_to = get_query_dates(self)
             queryset = Mark.objects.filter(student__student_user=user).filter(date__gte=date_from, date__lte=date_to)
             dates = [mark.date for mark in queryset]
         return JsonResponse(data={"dates": dates})
@@ -148,9 +147,9 @@ class MarkViewSet(viewsets.ModelViewSet):
     @list_route(methods=['get'])
     def student_table_data(self, request):
         user = self.request.user
-        if self.student_check(user=user):
+        if student_check(user=user):
             try:
-                date_from, date_to = self.get_query_dates()
+                date_from, date_to = get_query_dates(self)
             except:
                 content = {'bad date': 'date_from:"01.10.2017", date_to:"30.10.2017"'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
@@ -176,9 +175,9 @@ class MarkViewSet(viewsets.ModelViewSet):
     @list_route(methods=['get'])
     def teacher_table_data(self, request):
         user = self.request.user
-        if self.teacher_check(user):
+        if teacher_check(user):
             grade_subject_id = self.request.query_params.get('grade_subject_id', 0)
-            date_from, date_to = self.get_query_dates()
+            date_from, date_to = get_query_dates(self)
             if grade_subject_id is None:
                 return Response({'no correct grade_subject_id'}, status=status.HTTP_400_BAD_REQUEST)
             all_marks = Mark.objects.order_by('date').filter(grade_subject_id=grade_subject_id). \
@@ -195,15 +194,4 @@ class MarkViewSet(viewsets.ModelViewSet):
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-    def get_query_dates(self):
-        date_from = datetime.datetime.strptime(self.request.query_params.get("data_from", "8.09.2017").strip(),
-                                               "%d.%m.%Y").date()
-        date_to = datetime.datetime.strptime(self.request.query_params.get("data_to", "12.09.2017").strip(),
-                                             "%d.%m.%Y").date()
-        return date_from, date_to
 
-    def student_check(self, user):
-        return not user.is_anonymous and user.staff == 'S'
-
-    def teacher_check(self, user):
-        return not user.is_anonymous and user.staff == 'T'
