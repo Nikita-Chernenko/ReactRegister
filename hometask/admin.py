@@ -1,3 +1,5 @@
 from django.contrib import admin
-
-# Register your models here.
+from hometask.models import Hometask
+@admin.register(Hometask)
+class HometaskAdmin(admin.ModelAdmin):
+    pass

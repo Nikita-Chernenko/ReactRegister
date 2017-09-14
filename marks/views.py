@@ -1,4 +1,5 @@
 import datetime
+import random
 
 from annoying.functions import get_object_or_None
 from django.http import JsonResponse
@@ -6,9 +7,11 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
+from absence.models import Absence
 from classtime.models import ClassTime
 from core.checks import teacher_check, student_check
 from core.queries_functions import get_query_dates
+from hometask.models import Hometask
 
 from marks.models import Mark, GradeSubject, Student, Grade, Teacher
 from marks.serializers import MarkSerializer, GradeSubjectSerializer, StudentSerializer
@@ -25,123 +28,58 @@ class MarkViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = Mark.objects.all()
-        staff = user.staff
-        if staff == "S":
+        if student_check(user):
             queryset = queryset.filter(student=Student.objects.get(student_user=user)).order_by('date',
                                                                                                 'class_time__lesson_start')
-        elif staff == "T":
-            grade_subject_id = self.request.query_params.get("grade_subject_id", None)
-            queryset = queryset.filter(grade_subject_id=grade_subject_id)
+        elif teacher_check(user):
+            queryset = queryset.filter(grade_subject__teacher__teacher_user=user)
         return queryset
 
     def create(self, request, *args, **kwargs):
         user = self.request.user
         value = request.data['value']
-        student = request.data['student']
+        student_id = request.data['student']
         class_time_id = request.data['class_time']
         date = request.data['date']
         grade_subject_id = request.data['grade_subject']
-        RegisterNotification(sender=Teacher.objects.get(teacher_user=user), reciever=student, value=value,
+        RegisterNotification(sender=Teacher.objects.get(teacher_user=user), receiver=Student.objects.get(pk=student_id), value=value,
                              class_time=ClassTime.objects.get(pk=class_time_id),
                              date=date, grade_subject=GradeSubject.objects.get(pk=grade_subject_id)).save()
-        return super(self).create(request, *args, **kwargs)
+        return super(MarkViewSet,self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        value = request.data['value']
         user = self.request.user
-        student = request.data['student']
-        class_time = request.data['class_time']
+        value = request.data['value']
+        student_id = request.data['student']
+        class_time_id = request.data['class_time']
         date = request.data['date']
-        grade_subject = request.data['grade_subject']
-        notification = RegisterNotification.objects.get(sender=user, reciever=student,
-                                                        class_time=class_time, date=date, grade_subject=grade_subject)
+        grade_subject_id = request.data['grade_subject']
+        notification = RegisterNotification.objects.get(sender=Teacher.objects.get(teacher_user=user), receiver=Student.objects.get(pk=student_id),
+                                                        class_time=ClassTime.objects.get(pk=class_time_id),
+                                                        date=date, grade_subject=GradeSubject.objects.get(pk=grade_subject_id))
         notification.value = value
         notification.save()
-        return super(self).update(request, *args, **kwargs)
-
-    @list_route(methods=['get'])
-    def grade_subjects(self, request):
-        user = request.user
-        queryset = GradeSubject.objects.all().first()
-        if student_check(user=user):
-            queryset = GradeSubject.objects.order_by('subject__full_name').filter(grade__student__student_user=user)
-        serializers = GradeSubjectSerializer(queryset, many=True)
-        return Response(serializers.data)
-
-    @list_route(methods=['get'])
-    def marks_dates(self, request):
-        user = request.user
-        queryset = Mark.objects.all().first()
-        dates = queryset.date
-        if student_check(user=user):
-            date_from, date_to = get_query_dates(self)
-            queryset = Mark.objects.filter(student__student_user=user).filter(date__gte=date_from, date__lte=date_to)
-            dates = [mark.date for mark in queryset]
-        return JsonResponse(data={"dates": dates})
+        return super(MarkViewSet,self).update(request, *args, **kwargs)
 
     # @list_route(methods=['get'])
-    # def marks_for_student_table(self, request):
-    #     if self.student_check(user=self.request.user):
-    #         try:
-    #             date_from,date_to = self.get_query_dates()
-    #         except:
-    #             content = {'bad date': 'date_from:"01.10.2017", date_to:"30.10.2017"'}
-    #             return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    # def grade_subjects(self, request):
+    #     user = request.user
+    #     queryset = GradeSubject.objects.all().first()
+    #     if student_check(user=user):
+    #         queryset = GradeSubject.objects.order_by('subject__full_name').filter(grade__student__student_user=user)
+    #     serializers = GradeSubjectSerializer(queryset, many=True)
+    #     return Response(serializers.data)
     #
-    #         student = get_object_or_None(Student,student_user=request.user)
-    #         all_marks = Mark.objects.order_by('date').filter(student=student). \
-    #             filter(date__gte=date_from).filter(date__lte=date_to)
-    #         dates = []
-    #         date = date_from
-    #         date_delta = datetime.timedelta(days=1)
-    #         while date < date_to + date_delta:
-    #             dates.append(date.strftime("%d-%m"))
-    #             date += date_delta
-    #
-    #         subjects = list(GradeSubject.objects.filter(grade__student=student).order_by('subject__full_name'))
-    #         all_marks_list = list([all_marks.filter(grade_subject=subject) for subject in subjects])
-    #         i = 1
-    #         while (i < len(subjects)):
-    #             if subjects[i - 1].subject == subjects[i].subject:
-    #                 if len(all_marks_list[i - 1]) >= len(all_marks_list[i]):
-    #                     subjects.remove(subjects[i])
-    #                     all_marks_list.remove(all_marks_list[i])
-    #                 else:
-    #                     subjects.remove(subjects[i - 1])
-    #                     all_marks_list.remove(all_marks_list[i - 1])
-    #                 i -= 1
-    #             i += 1
-    #         all_marks_index = 0
-    #         subjects_marks = []
-    #         for subject in subjects:
-    #             marks = all_marks_list[all_marks_index]
-    #             all_marks_index += 1
-    #             marks_index = 0
-    #             marks_to_send = []
-    #             date = date_from
-    #             while date <= date_to + date_delta:
-    #                 if marks_index > 0 and marks_index < len(marks) and marks[marks_index].date == marks[
-    #                             marks_index - 1].date:
-    #                     marks_to_send[len(marks_to_send) - 1]+= "/"  + str(marks[marks_index].value)
-    #                     date = marks[marks_index].date
-    #                     marks_index += 1
-    #                     date += date_delta
-    #                     continue
-    #                 elif date >= date_to and len(marks_to_send) == len(dates):
-    #                     break
-    #                 elif marks_index < len(marks) and marks[marks_index].date == date:
-    #                     marks_to_send.append(str(marks[marks_index].value))
-    #                     marks_index += 1
-    #                 else:
-    #                     marks_to_send+= " "
-    #                 date += date_delta
-    #             subjects_marks+= marks_to_send
-    #         subjects = SubjectSerializer([subject.subject for subject in subjects],many=True).data
-    #         # content = JsonResponse({'dates': dates, 'subjects_marks': subjects_marks,'subjects':subjects})
-    #         return Response({'subjects':subjects, 'marks':subjects_marks,'dates':dates},status=status.HTTP_200_OK)
-    #     else:
-    #         content = {'bad_user': 'user is not a student'}
-    #         return Response(content, status=status.HTTP_403_FORBIDDEN)
+    # @list_route(methods=['get'])
+    # def marks_dates(self, request):
+    #     user = request.user
+    #     queryset = Mark.objects.all().first()
+    #     dates = queryset.date
+    #     if student_check(user=user):
+    #         date_from, date_to = get_query_dates(self)
+    #         queryset = Mark.objects.filter(student__student_user=user).filter(date__gte=date_from, date__lte=date_to)
+    #         dates = [mark.date for mark in queryset]
+    #     return JsonResponse(data={"dates": dates})
 
     # student token = "Authorization: Token 473cd764e73faf62f185b65e05a655eb9323259f"
     @list_route(methods=['get'])
@@ -151,10 +89,10 @@ class MarkViewSet(viewsets.ModelViewSet):
             try:
                 date_from, date_to = get_query_dates(self)
             except:
-                content = {'bad date': 'date_from:"01.10.2017", date_to:"30.10.2017"'}
+                content = {'bad date': '?date_from:2017-10-01&date_to:2017-10-30'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            marks = Mark.objects.filter(student=Student.objects.get(student_user=user)). \
-                order_by('date', 'class_time__lesson_start')
+            marks = Mark.objects.filter(student=Student.objects.get(student_user=user)).filter(date__gte=date_from,date__lte=date_to).\
+                order_by('date', 'grade_subject','class_time__lesson_start')
             grade_subjects = GradeSubject.objects.order_by('subject__full_name').filter(
                 grade__student__student_user=user)
             dates = []
@@ -176,17 +114,21 @@ class MarkViewSet(viewsets.ModelViewSet):
     def teacher_table_data(self, request):
         user = self.request.user
         if teacher_check(user):
-            grade_subject_id = self.request.query_params.get('grade_subject_id', 0)
-            date_from, date_to = get_query_dates(self)
+            try:
+                grade_subject_id = self.request.query_params.get('grade_subject_id')
+                date_from, date_to = get_query_dates(self)
+            except:
+                content = {'bad date or grade subject id ': '?date_from:2017-10-01&date_to:2017-10-30&grade_subject_id=207'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
             if grade_subject_id is None:
                 return Response({'no correct grade_subject_id'}, status=status.HTTP_400_BAD_REQUEST)
             all_marks = Mark.objects.order_by('date').filter(grade_subject_id=grade_subject_id). \
-                filter(date__gte=date_from).filter(date__lte=date_to)
+                filter(date__gte=date_from).filter(date__lte=date_to).order_by('date','student__name')
             grade = get_object_or_None(Grade, gradesubject__id=grade_subject_id)
-            dates = [sub for sub in ScheduledSubject.objects.
-                filter(grade_subject_id=grade_subject_id).filter(date__gt=date_from).
-                filter(date__lt=date_to).values_list('date', flat=True).distinct()]
-            students = Student.objects.filter(grade=grade)
+            dates = [ date.strftime('%d-%m %a') for date in ScheduledSubject.objects.
+                filter(grade_subject_id=grade_subject_id).filter(date__gte=date_from).
+                filter(date__lte=date_to).values_list('date', flat=True).distinct()]
+            students = Student.objects.filter(grade=grade).order_by('name')
             marks = MarkSerializer(all_marks, many=True).data
             students = StudentSerializer(students, many=True).data
             return Response({'marks': marks, 'students': students, 'dates': dates})

@@ -1,8 +1,10 @@
 import django_filters
+from annoying.functions import get_object_or_None
 from django.contrib.auth.models import User
 from django.db import models
 
 from DjangoReact import settings
+
 
 class Subject(models.Model):
     short_name = models.CharField(max_length=6, default="")
@@ -65,9 +67,13 @@ from timetable.models import  ScheduledSubject
 class Mark(ScheduledSubject):
     value = models.IntegerField(verbose_name="mark")
     student = models.ForeignKey(Student,on_delete=models.CASCADE)
-    # scheduled_subject = models.ForeignKey(ScheduledSubject,
-    #                                       on_delete=models.CASCADE, related_name='subject')
-
+    def save(self,*args,**kwargs):
+        from absence.models import Absence
+        absence= get_object_or_None(Absence,student = self.student, grade_subject = self.grade_subject,
+                                    class_time_id = self.class_time_id,date = self.date)
+        if absence is not None:
+            absence.delete()
+        super(Mark,self).save(*args,**kwargs)
     def __str__(self):
         return " Value " + str(self.value) + " " + str(self.student) + \
                " Subject " ' '+str( self.grade_subject.subject) + " Date " + str(self.date.strftime("%d/%m/%Y"))
